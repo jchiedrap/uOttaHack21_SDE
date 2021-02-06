@@ -1,5 +1,6 @@
-#include<UltraDistSensor.h> // Download Ultrasound library
+#include <NewPing.h>
 #include <LiquidCrystal.h> // Download Liquid Crystal
+
 
 int lcdRSPin = 7;
 int lcdEPin = 6;
