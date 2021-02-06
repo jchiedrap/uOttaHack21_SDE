@@ -1,5 +1,5 @@
-// TEST CODE V2 - sourced (modified) from circuito.io
-// CHANGES: added Servo
+// TEST CODE V3 - sourced (modified) from circuito.io
+// CHANGES: removed servo, added stepper motor, cleaned up menu names
 
 // Include Libraries
 #include "Arduino.h"
@@ -8,7 +8,7 @@
 #include "NewPing.h"
 #include "LiquidCrystal.h"
 #include "LED.h"
-#include "Servo.h"
+#include "StepperMotor.h"
 #include "PiezoSpeaker.h"
 
 // Pin Definitions
@@ -25,12 +25,12 @@
 #define LCD_PIN_DB7 12
 #define LEDR_1_PIN_VIN 5
 #define LEDR_2_PIN_VIN 6
-#define SERVO9G_PIN_SIG A4
-#define THINSPEAKER_PIN_POS A1
+#define THINSPEAKER_PIN_POS	A4
+#define STEPPERGEARED_PIN_STEP	A5
+#define STEPPERGEARED_PIN_DIR	A1
 
 // Global variables and defines
-const int servo9gRestPosition = 20;                                                              //Starting position
-const int servo9gTargetPosition = 150;                                                           //Position when event is detected
+#define stepperGearedDelayTime  1000                                                        //Position when event is detected
 unsigned int thinSpeakerHoorayLength = 6;                                                        // amount of notes in melody
 unsigned int thinSpeakerHoorayMelody[] = {NOTE_C4, NOTE_E4, NOTE_G4, NOTE_C5, NOTE_G4, NOTE_C5}; // list of notes. List length must match HoorayLength!
 unsigned int thinSpeakerHoorayNoteDurations[] = {8, 8, 8, 4, 8, 4};                              // note durations; 4 = quarter note, 8 = eighth note, etc. List length must match HoorayLength!
@@ -41,7 +41,7 @@ NewPing hcsr04(HCSR04_PIN_TRIG, HCSR04_PIN_ECHO);
 LiquidCrystal lcd(LCD_PIN_RS, LCD_PIN_E, LCD_PIN_DB4, LCD_PIN_DB5, LCD_PIN_DB6, LCD_PIN_DB7);
 LED ledR_1(LEDR_1_PIN_VIN);
 LED ledR_2(LEDR_2_PIN_VIN);
-Servo servo9g;
+StepperMotor stepperGeared(STEPPERGEARED_PIN_STEP,STEPPERGEARED_PIN_DIR);
 PiezoSpeaker thinSpeaker(THINSPEAKER_PIN_POS);
 
 // define vars for testing menu
@@ -67,10 +67,10 @@ void setup()
     bthc05.println("Bluetooth On....");
     // set up the LCD's number of columns and rows
     lcd.begin(16, 2);
-    servo9g.attach(SERVO9G_PIN_SIG);
-    servo9g.write(servo9gRestPosition);
-    delay(100);
-    servo9g.detach();
+    // enable the stepper motor, use .disable() to disable the motor
+    stepperGeared.enable();
+    // set stepper motor speed by changing the delay value, the higher the delay the slower the motor will turn
+    stepperGeared.setStepDelay(stepperGearedDelayTime);
     menuOption = menu();
 }
 
@@ -145,14 +145,12 @@ void loop()
     }
     else if (menuOption == '6')
     {
-        // 9G Micro Servo - Test Code
-        // The servo will rotate to target position and back to resting position with an interval of 500 milliseconds (0.5 seconds)
-        servo9g.attach(SERVO9G_PIN_SIG);      // 1. attach the servo to correct pin to control it.
-        servo9g.write(servo9gTargetPosition); // 2. turns servo to target position. Modify target position by modifying the 'ServoTargetPosition' definition above.
-        delay(500);                           // 3. waits 500 milliseconds (0.5 sec). change the value in the brackets (500) for a longer or shorter delay in milliseconds.
-        servo9g.write(servo9gRestPosition);   // 4. turns servo back to rest position. Modify initial position by modifying the 'ServoRestPosition' definition above.
-        delay(500);                           // 5. waits 500 milliseconds (0.5 sec). change the value in the brackets (500) for a longer or shorter delay in milliseconds.
-        servo9g.detach();                     // 6. release the servo to conserve power. When detached the servo will NOT hold it's position under stress.
+        // Small Reduction Stepper Motor with EasyDriver - 5VDC 32-Step 1/16 Gearing - Test Code
+        // the higher the time value the slower the motor will run
+        stepperGeared.step(1, 1000); // move motor 1000 steps in one direction
+        delay(1000);                 // short stop
+        stepperGeared.step(0, 1000); // move motor 1000 steps in the other dirction
+        delay(1000);                 //short stop
     }
     else if (menuOption == '7')
     {
@@ -182,8 +180,8 @@ char menu()
     Serial.println(F("(2) Buzzer"));
     Serial.println(F("(3) Ultrasonic Sensor - HC-SR04"));
     Serial.println(F("(4) LCD 16x2"));
-    Serial.println(F("(5) LED - Basic Red 5mm #1"));
-    Serial.println(F("(6) 9G Micro Servo"));
+    Serial.println(F("(5) LED"));
+    Serial.println(F("(6) Stepper Motor"));
     Serial.println(F("(7) Thin Speaker"));
     Serial.println(F("(menu) send anything else or press on board reset button\n"));
     while (!Serial.available())
@@ -205,9 +203,9 @@ char menu()
             else if (c == '4')
                 Serial.println(F("Now Testing LCD 16x2"));
             else if (c == '5')
-                Serial.println(F("Now Testing LED - Basic Red 5mm #1"));
+                Serial.println(F("Now Testing LED"));
             else if (c == '6')
-                Serial.println(F("Now Testing 9G Micro Servo"));
+                Serial.println(F("Now Testing Stepper Motor"));
             else if (c == '7')
                 Serial.println(F("Now Testing Thin Speaker"));
             else
