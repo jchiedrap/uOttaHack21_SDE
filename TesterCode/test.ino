@@ -1,4 +1,5 @@
-// TEST CODE V1 - sourced (modified) from circuito.io
+// TEST CODE V2 - sourced (modified) from circuito.io
+// CHANGES: added Servo
 
 // Include Libraries
 #include "Arduino.h"
@@ -7,6 +8,7 @@
 #include "NewPing.h"
 #include "LiquidCrystal.h"
 #include "LED.h"
+#include "Servo.h"
 #include "PiezoSpeaker.h"
 
 // Pin Definitions
@@ -23,9 +25,12 @@
 #define LCD_PIN_DB7 12
 #define LEDR_1_PIN_VIN 5
 #define LEDR_2_PIN_VIN 6
-#define THINSPEAKER_PIN_POS A4
+#define SERVO9G_PIN_SIG A4
+#define THINSPEAKER_PIN_POS A1
 
 // Global variables and defines
+const int servo9gRestPosition = 20;                                                              //Starting position
+const int servo9gTargetPosition = 150;                                                           //Position when event is detected
 unsigned int thinSpeakerHoorayLength = 6;                                                        // amount of notes in melody
 unsigned int thinSpeakerHoorayMelody[] = {NOTE_C4, NOTE_E4, NOTE_G4, NOTE_C5, NOTE_G4, NOTE_C5}; // list of notes. List length must match HoorayLength!
 unsigned int thinSpeakerHoorayNoteDurations[] = {8, 8, 8, 4, 8, 4};                              // note durations; 4 = quarter note, 8 = eighth note, etc. List length must match HoorayLength!
@@ -36,6 +41,7 @@ NewPing hcsr04(HCSR04_PIN_TRIG, HCSR04_PIN_ECHO);
 LiquidCrystal lcd(LCD_PIN_RS, LCD_PIN_E, LCD_PIN_DB4, LCD_PIN_DB5, LCD_PIN_DB6, LCD_PIN_DB7);
 LED ledR_1(LEDR_1_PIN_VIN);
 LED ledR_2(LEDR_2_PIN_VIN);
+Servo servo9g;
 PiezoSpeaker thinSpeaker(THINSPEAKER_PIN_POS);
 
 // define vars for testing menu
@@ -61,6 +67,10 @@ void setup()
     bthc05.println("Bluetooth On....");
     // set up the LCD's number of columns and rows
     lcd.begin(16, 2);
+    servo9g.attach(SERVO9G_PIN_SIG);
+    servo9g.write(servo9gRestPosition);
+    delay(100);
+    servo9g.detach();
     menuOption = menu();
 }
 
@@ -68,7 +78,7 @@ void setup()
 void loop()
 {
 
-    if (menuOption == '1') 
+    if (menuOption == '1')
     {
         // HC - 05 Bluetooth Serial Module - Test Code
         String bthc05Str = "";
@@ -81,6 +91,8 @@ void loop()
             Serial.print("BT Raw Data: ");
             Serial.println(bthc05Str);
         }
+        //Send sensor data to Bluetooth device
+        //Send sensor data to Bluetooth device
         //Send sensor data to Bluetooth device
         bthc05.println("PUT YOUR SENSOR DATA HERE");
     }
@@ -96,6 +108,8 @@ void loop()
     else if (menuOption == '3')
     {
         // Ultrasonic Sensor - HC-SR04 - Test Code
+        // Read distance measurment from UltraSonic sensor
+        // Read distance measurment from UltraSonic sensor
         // Read distance measurment from UltraSonic sensor
         int hcsr04Dist = hcsr04.ping_cm();
         delay(10);
@@ -118,7 +132,7 @@ void loop()
     }
     else if (menuOption == '5')
     {
-        // LED - Basic - Test Code
+        // LED - Basic Red 5mm #1 - Test Code
         // The LED will turn on and fade till it is off
         for (int i = 255; i > 0; i -= 5)
         {
@@ -126,14 +140,29 @@ void loop()
             ledR_2.dim(i); // 2. Dim Led 2
             delay(15);     // 3. waits 5 milliseconds (0.5 sec). Change the value in the brackets (500) for a longer or shorter delay in milliseconds.
         }
-        ledR_1.off(); // 4. turns off Led 1
-        ledR_2.off(); // 5. turns off Led 2
+        ledR_1.off(); // 4. turns off
+        ledR_2.off(); // 5. turns off
     }
     else if (menuOption == '6')
+    {
+        // 9G Micro Servo - Test Code
+        // The servo will rotate to target position and back to resting position with an interval of 500 milliseconds (0.5 seconds)
+        servo9g.attach(SERVO9G_PIN_SIG);      // 1. attach the servo to correct pin to control it.
+        servo9g.write(servo9gTargetPosition); // 2. turns servo to target position. Modify target position by modifying the 'ServoTargetPosition' definition above.
+        delay(500);                           // 3. waits 500 milliseconds (0.5 sec). change the value in the brackets (500) for a longer or shorter delay in milliseconds.
+        servo9g.write(servo9gRestPosition);   // 4. turns servo back to rest position. Modify initial position by modifying the 'ServoRestPosition' definition above.
+        delay(500);                           // 5. waits 500 milliseconds (0.5 sec). change the value in the brackets (500) for a longer or shorter delay in milliseconds.
+        servo9g.detach();                     // 6. release the servo to conserve power. When detached the servo will NOT hold it's position under stress.
+    }
+    else if (menuOption == '7')
     {
         // Thin Speaker - Test Code
         // The Speaker will play the Hooray tune
         thinSpeaker.playMelody(thinSpeakerHoorayLength, thinSpeakerHoorayMelody, thinSpeakerHoorayNoteDurations);
+        thinSpeaker.playMelody(thinSpeakerHoorayLength, thinSpeakerHoorayMelody, thinSpeakerHoorayNoteDurations);
+        thinSpeaker.playMelody(thinSpeakerHoorayLength, thinSpeakerHoorayMelody, thinSpeakerHoorayNoteDurations);
+        delay(500);
+        delay(500);
         delay(500);
     }
 
@@ -153,10 +182,13 @@ char menu()
     Serial.println(F("(2) Buzzer"));
     Serial.println(F("(3) Ultrasonic Sensor - HC-SR04"));
     Serial.println(F("(4) LCD 16x2"));
-    Serial.println(F("(5) LED - Basic"));
-    Serial.println(F("(6) Thin Speaker"));
+    Serial.println(F("(5) LED - Basic Red 5mm #1"));
+    Serial.println(F("(6) 9G Micro Servo"));
+    Serial.println(F("(7) Thin Speaker"));
     Serial.println(F("(menu) send anything else or press on board reset button\n"));
-    while (!Serial.available()) {}
+    while (!Serial.available())
+        ;
+
     // Read data from serial monitor if received
     while (Serial.available())
     {
@@ -175,6 +207,8 @@ char menu()
             else if (c == '5')
                 Serial.println(F("Now Testing LED - Basic Red 5mm #1"));
             else if (c == '6')
+                Serial.println(F("Now Testing 9G Micro Servo"));
+            else if (c == '7')
                 Serial.println(F("Now Testing Thin Speaker"));
             else
             {
