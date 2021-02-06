@@ -17,7 +17,7 @@ void setup() {
 void loop() {
     reading=mysensor.distanceInCm();
      lcd.setCursor(0,0);
-     lcd.print("Distance :- ");
+     lcd.print("Distance : ");
       lcd.print(reading);
 
     delay(1000);
