@@ -2,12 +2,12 @@
 #include <LiquidCrystal.h> // Import LCD library
 
 
-int lcdRSPin = 7; // set pins for LCD
-int lcdEPin = 6;
-int lcdD4Pin = 5;
-int lcdD5Pin = 4;
-int lcdD6Pin = 3;
-int lcdD7Pin = 2;
+int lcdRSPin = 2; // set pins for LCD
+int lcdEPin = 3;
+int lcdD4Pin = 4;
+int lcdD5Pin = 5;
+int lcdD6Pin = 6;
+int lcdD7Pin = 7;
 
 int trig = 8; //set pins for ultrasonic
 int echo = 9;
@@ -15,7 +15,6 @@ int echo = 9;
 int buzzer = 10; //set buzzer pin
 
 int led1 = 11;
-int led2 = 12;
 
 int counter = 0;
 
@@ -29,14 +28,12 @@ void setup() {
     lcd.print("turning on");
 
     pinMode(led1, OUTPUT);
-    pinMode(led2, OUTPUT);
 
     Serial.begin(9600);
 }
 
 void loop() {
     digitalWrite(led1, LOW);
-    digitalWrite(led2, LOW);
     reading=sonar.ping_cm();
     lcd.clear();
     lcd.setCursor(0,0);
@@ -60,12 +57,10 @@ void loop() {
 
       tone(buzzer, 1000, 1000);
       digitalWrite (led1, HIGH);
-      digitalWrite (led2, HIGH);
       delay (1000);
   
       noTone(buzzer);
       digitalWrite (led1,  LOW);
-      digitalWrite (led2, LOW);
       delay (1000);
       
     }
